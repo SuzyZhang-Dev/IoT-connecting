@@ -1,7 +1,8 @@
 
 add_executable(ass4-pico2mqtt
         main.cpp
-        MQTTService.cpp
+        MQTTConnection.cpp
+        JsonParser.cpp
         pico-modbus/display/mono_vlsb.cpp
         pico-modbus/display/mono_vlsb.h
         pico-modbus/display/ssd1306.cpp

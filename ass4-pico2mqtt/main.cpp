@@ -2,11 +2,12 @@
 // Created by 张悦 on 14.4.2026.
 //
 
-#include "MQTTService.h"
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include <cstdio>
 #include "private.h"
+#include "MQTTConnection.h"
+#include "JsonParser.h"
 
 //helper functions
 //https://stackoverflow.com/questions/58860733/writing-a-json-parser-for-c
@@ -72,20 +73,20 @@ int main() {
         gpio_put(leds[i].gpio, 0);
     }
 
-    MQTTService mqtt(WIFI_SSID, WIFI_PASS);
+    MQTTConnection mqtt(WIFI_SSID, WIFI_PASS);
     mqtt.connect_tcp();
     mqtt.connect_mqtt();
 
-    if (mqtt.mqtt_is_connected()) {
+    if (mqtt.mqtt_is_connected_()) {
         mqtt.publish("Hi from Pico", "suzy/test");
     }
 
-    if (!mqtt.mqtt_is_connected()) {
+    if (!mqtt.mqtt_is_connected_()) {
         printf("MQTT connection failed\n");
         return 1;
     }
 
-    MQTTService::set_command_handler(handle_led_command);
+    MQTTConnection::set_command_handler(handle_led_command);
     mqtt.subscribe(TOPIC_LED);
     bool sw2_pressed = true;
 
