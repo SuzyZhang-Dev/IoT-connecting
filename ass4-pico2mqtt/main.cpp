@@ -16,48 +16,59 @@
 #define TOPIC_LED "suzy/LED"
 #define NUM_LEDS 3
 
-struct LedCommand {
+struct Leds {
     const char *led_name;
     uint gpio;
-    const char *state_cmd;
 };
 
-static constexpr LedCommand leds[] = {
-    {"D1", 20, nullptr},
-    {"D2", 21, nullptr},
-    {"D3", 22, nullptr},
+static constexpr Leds leds[] = {
+    {"D1", 20},
+    {"D2", 21},
+    {"D3", 22},
 };
 
-// Parse "D1;ON"
-//
-static LedCommand parse_command(const char *payload) {
+// helper function to parse LED name
+int find_gpio_by_led_name(const std::string& target_name) {
     for (int i = 0; i < NUM_LEDS; i++) {
-        size_t name_len = strlen(leds[i].led_name);
-        if (strncmp(payload, leds[i].led_name, name_len) == 0 &&
-            payload[name_len] == ';') {
-            return {leds[i].led_name,
-                leds[i].gpio,
-                payload + name_len + 1};
+        if (target_name ==leds[i].led_name) {
+            return leds[i].gpio;
         }
     }
-    // no correct LED found or invalid cmd
-    return {nullptr, 0, nullptr};
+    return -1; // not found
 }
 
 void handle_led_command(const char *payload) {
-    LedCommand cmd = parse_command(payload);
-    if (cmd.led_name == nullptr) {
-        printf("Unknown LED in payload: %s\n", payload);
+    JsonParser::Reader reader;
+    JsonParser::Value root;
+    std::string raw_data(payload);
+
+    if (!JsonParser::Reader::parse(raw_data, root)) {
+        printf("Error: Payload is not valid JSON!\n");
         return;
     }
-    if (strcmp(cmd.state_cmd, "ON") == 0) {
-        gpio_put(cmd.gpio, 1);
-    } else if (strcmp(cmd.state_cmd, "OFF") == 0) {
-        gpio_put(cmd.gpio, 0);
-    } else if (strcmp(cmd.state_cmd, "TOGG") == 0) {
-        gpio_put(cmd.gpio, !gpio_get(cmd.gpio));
+
+    if (!root.is_member("name") || !root.is_member("state")) {
+        printf("Error: JSON missing 'name' or 'state' keys!\n");
+        return;
+    }
+
+    std::string led_name = root["name"].as_string();
+    std::string state_cmd = root["state"].as_string();
+
+    int gpio_pin = find_gpio_by_led_name(led_name);
+    if (gpio_pin == -1) {
+        printf("Unknown LED name: %s\n", led_name.c_str());
+        return;
+    }
+
+    if (state_cmd == "ON") {
+        gpio_put(gpio_pin, 1);
+    } else if (state_cmd == "OFF") {
+        gpio_put(gpio_pin, 0);
+    } else if (state_cmd == "TOGG") {
+        gpio_put(gpio_pin, !gpio_get(gpio_pin));
     } else {
-        printf("Unknown command: %s\n", cmd.state_cmd);
+        printf("Unknown state command: %s\n", state_cmd.c_str());
     }
 }
 
@@ -74,14 +85,13 @@ int main() {
     }
 
     MQTTConnection mqtt(WIFI_SSID, WIFI_PASS);
-    mqtt.connect_tcp();
-    mqtt.connect_mqtt();
+    mqtt.connect();
 
-    if (mqtt.mqtt_is_connected_()) {
-        mqtt.publish("Hi from Pico", "suzy/test");
+    if (mqtt.mqtt_is_connected()) {
+        mqtt.publish("suzy/test","Hi from Pico");
     }
 
-    if (!mqtt.mqtt_is_connected_()) {
+    if (!mqtt.mqtt_is_connected()) {
         printf("MQTT connection failed\n");
         return 1;
     }
@@ -94,7 +104,7 @@ int main() {
         mqtt.client_yield();
         bool current_sw2_state = gpio_get(SW2_PIN);
         if (sw2_pressed && !current_sw2_state) {
-            mqtt.publish("SW2 pressed on Pico W", "suzy/button");
+            mqtt.publish("suzy/button","SW2 pressed on Pico W");
         }
         sw2_pressed = current_sw2_state;
         sleep_ms(10);

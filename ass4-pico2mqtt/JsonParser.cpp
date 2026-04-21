@@ -27,23 +27,27 @@ namespace JsonParser {
     }
 
     std::string Reader::trim_quotes(const std::string &str) {
-        size_t start = str.find_first_not_of("\"");
-        size_t end = str.find_last_not_of("\"");
-        if (start == std::string::npos || end != std::string::npos && start < end) {
-            return str.substr(start+1, end - start - 1);
+        size_t first = str.find_first_not_of(" \t\r\n");
+        if (first == std::string::npos) return "";
+        size_t last = str.find_last_not_of(" \t\r\n");
+        std::string trimmed = str.substr(first, last - first + 1);
+        if (trimmed.length() >= 2 && trimmed.front() == '"' && trimmed.back() == '"') {
+            return trimmed.substr(1, trimmed.length() - 2);
         }
-        return str;
+        return trimmed;
     }
 
     bool Reader::parse(const std::string& json_str, Value& root) {
         size_t start = json_str.find('{');
         size_t end = json_str.find('}');
+        // not a Json if no { }
         if (start == std::string::npos || end == std::string::npos) return false;
-
+        // next char after { should be ", before } should be "
         std::string content = json_str.substr(start + 1, end - start - 1);
         size_t pos = 0;
 
         while (pos < content.length()) {
+            // {"name": "D1", "state": "ON"}
             size_t colon = content.find(':', pos);
             if (colon == std::string::npos) break;
 

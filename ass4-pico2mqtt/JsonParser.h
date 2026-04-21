@@ -25,7 +25,7 @@ namespace JsonParser {
     class Reader {
     public:
         Reader()=default;
-        bool parse(const std::string& json_str, Value& root);
+        static bool parse(const std::string& json_str, Value& root);
     private:
         static std::string trim_quotes(const std::string& str);
     };

@@ -11,11 +11,11 @@ void (*MQTTConnection::command_handler)(const char*) = nullptr;
 MQTTConnection::MQTTConnection(const std::string &ssid, const std::string &pwd) :
 	ssid_(ssid), pwd_(pwd), ipstack_(ssid.c_str(), pwd.c_str()),
 	client(ipstack_), tcp_is_connected_(false), mqtt_is_connected_(false), rc_(0) {
-	broker_ip_ = HOME_IP; //CLASS_IP
+	broker_ip_ = CLASS_IP; //CLASS_IP
 	port_ = 1883;
 	data_ = MQTTPacket_connectData_initializer;
 	data_.MQTTVersion = 3;
-	data_.clientID.cstring = const_cast<char *>("PicoW-sample");
+	data_.clientID.cstring = const_cast<char *>("PicoW-Suzy");
 	mqtt_send_  = make_timeout_time_ms(2000);
 	yield_timer_ = make_timeout_time_ms(50);
 }

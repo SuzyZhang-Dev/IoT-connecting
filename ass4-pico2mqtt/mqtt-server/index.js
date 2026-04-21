@@ -9,19 +9,12 @@ const app = express();
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 // Create variables for MQTT use here
-// Change to your local broker IP when testing at home (e.g. 'mqtt://192.168.1.42:1883')
 
-const broker = 'mqtt://10.161.4.77:1883';
+const broker = 'mqtt://xx:1883';
 const options = {
-    username: 'MP-IOT',
-    password: 'ID2vOcYrWi'
+    username: '//',
+    password: '//'
 };
-
-// const broker = 'mqtt://192.168.1.102:1883';
-// const options = {
-//     username: 'TP-LINK_9C5E',
-//     password: 'Zhangyue116.'
-// };
 
 
 const topic = 'suzy/button';
@@ -97,6 +90,7 @@ app.post('/', async (req, res) => {
         // to myself
         console.log("Publishing...")
         client.publish(new_topic, new_message.msg);
+        //client.publish(new_topic, req.body.msg);
 
     }
     const messages = await read();
